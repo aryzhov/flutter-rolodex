@@ -1,0 +1,15 @@
+.idea/
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+
+pubspec.lock
+*.iml
+
+example/build/
+example/ios/
+example/android/
+example/web/
+
