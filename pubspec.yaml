@@ -1,8 +1,7 @@
 name: rolodex
-description: A new Flutter plugin.
+description: A Flutter widget that represents a roll of cards.
 version: 0.0.1
-author:
-homepage:
+homepage: https://github.com/aryzhov/flutter-rolodex
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
@@ -14,4 +13,3 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
