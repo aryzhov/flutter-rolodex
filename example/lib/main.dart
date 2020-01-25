@@ -21,7 +21,6 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final value = counter;
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
@@ -35,13 +34,12 @@ class _MyAppState extends State<MyApp> {
               theme: const RolodexThemeData(
 //                cardColor: Colors.black,
 //                clipBorderRadius: BorderRadius.all(Radius.circular(10)),
-                alwaysShowBackground: true,
-                cardFallDirection: AxisDirection.left,
-                cardStackAlignment: AlignmentDirectional.centerEnd,
+//                alwaysShowBackground: true,
+//                cardFallDirection: AxisDirection.left,
+//                cardStackAlignment: AlignmentDirectional.centerEnd,
               ),
-              value: value,
-              builder: (context) => Text("$value",
-                style: TextStyle(fontSize: 40)
+              value: counter,
+              child: Text("$counter", style: TextStyle(fontSize: 40)
               ),
             ),
             ButtonBar(

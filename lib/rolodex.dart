@@ -194,7 +194,7 @@ class _RolodexCard<T> extends StatelessWidget {
     return AnimatedBuilder(
       animation: item.animation,
       builder: (context, child) {
-        Widget w = item.rolodex.builder(context);
+        Widget w = item.rolodex.child ?? item.rolodex.builder(context);
         final theme = item.theme;
         if(theme.alwaysShowBackground || (item.direction != 0 || topItem != null)) {
           w = DecoratedBox(
@@ -308,18 +308,19 @@ class _RolodexItem<T> {
 class Rolodex<T> extends StatefulWidget {
 
   final WidgetBuilder builder;
+  final Widget child;
   final T value;
   final Comparator comparator;
   final RolodexThemeData theme;
 
   const Rolodex({
-    @required
     this.builder,
+    this.child,
     @required
     this.value,
     this.comparator = comparableComparator,
     this.theme,
-  });
+  }): assert(builder != null || child != null);
 
   @override
   _RolodexState createState() => _RolodexState<T>();
