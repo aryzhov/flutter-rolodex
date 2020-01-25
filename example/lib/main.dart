@@ -33,20 +33,13 @@ class _MyAppState extends State<MyApp> {
           children: <Widget>[
             Rolodex(
               value: value,
-              builder: (context) => Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: const Border.fromBorderSide(const BorderSide(color: Colors.grey)),
-//                border: Border.all(color: Colors.grey),
-                  borderRadius: const BorderRadius.all(const Radius.circular(3.0)),
-                ),
-                child: SizedBox(
-                  width: 40,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text("$value", style: TextStyle(fontSize: 20), softWrap: false, overflow: TextOverflow.fade,),
-                    ),
+              builder: (context) => SizedBox(
+                width: 100,
+                height: 100,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Text("$value", style: TextStyle(fontSize: 40), softWrap: false, overflow: TextOverflow.fade,),
                   ),
                 ),
               ),

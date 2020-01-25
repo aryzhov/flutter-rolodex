@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 // A comparator that compares comparable values
@@ -24,6 +25,14 @@ class _RolodexCard<T> extends StatelessWidget {
       animation: item.animation,
       builder: (context, child) {
         Widget w = item.rolodex.builder(context);
+        w = DecoratedBox(
+          child: w,
+          decoration: BoxDecoration(
+            color: Colors.white,
+          ),
+          position: DecorationPosition.background,
+        );
+
         if(topItem != null) {
           final w0 = w;
           w = AnimatedBuilder(
@@ -33,12 +42,18 @@ class _RolodexCard<T> extends StatelessWidget {
                 child: w0,
                 decoration: BoxDecoration(
                   color: Colors.black26.withOpacity(topItem.animation.value * 0.6),
+//                    color: Colors.black26.withOpacity((1.0 - item.animation.value + topItem.animation.value) * 0.6),
                 ),
                 position: DecorationPosition.foreground,
               );
             }
           );
         }
+        w = ClipRRect(
+          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
+          child: w,
+          clipBehavior: Clip.antiAlias,
+        );
         return Transform(
           origin: Offset.zero,
           transform: Matrix4.diagonal3Values(1.0, item.animation.value, 1.0),
