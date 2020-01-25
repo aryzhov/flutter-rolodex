@@ -25,14 +25,16 @@ class _RolodexCard<T> extends StatelessWidget {
       animation: item.animation,
       builder: (context, child) {
         Widget w = item.rolodex.builder(context);
-        w = DecoratedBox(
-          child: w,
-          decoration: BoxDecoration(
-            color: Colors.white,
-          ),
-          position: DecorationPosition.background,
-        );
 
+        if(item.direction != 0 || topItem != null) {
+          w = DecoratedBox(
+            child: w,
+            decoration: BoxDecoration(
+              color: Colors.white,
+            ),
+            position: DecorationPosition.background,
+          );
+        }
         if(topItem != null) {
           final w0 = w;
           w = AnimatedBuilder(
@@ -49,16 +51,24 @@ class _RolodexCard<T> extends StatelessWidget {
             }
           );
         }
-        w = ClipRRect(
-          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
-          child: w,
-          clipBehavior: Clip.antiAlias,
-        );
-        return Transform(
-          origin: Offset.zero,
-          transform: Matrix4.diagonal3Values(1.0, item.animation.value, 1.0),
-          child: w,
-        );
+
+        if(item.direction != 0 || item.animation.value < 1 || (topItem?.animation?.value ?? 1) < 1) {
+          w = ClipRRect(
+            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
+            child: w,
+            clipBehavior: Clip.antiAlias,
+          );
+        }
+
+        if(item.direction == 0) {
+          return w;
+        } else {
+          return Transform(
+            origin: Offset.zero,
+            transform: Matrix4.diagonal3Values(1.0, item.animation.value, 1.0),
+            child: w,
+          );
+        }
       },
     );
   }
@@ -70,8 +80,9 @@ class _RolodexItem<T> {
   final _RolodexState<T> state;
   AnimationController ac;
   Animation<double> animation;
+  final int direction;
 
-  _RolodexItem(this.key, this.rolodex, this.state, int direction) {
+  _RolodexItem(this.key, this.rolodex, this.state, this.direction) {
     ac = AnimationController(vsync: state, lowerBound: 0, upperBound: 1, duration: const Duration(milliseconds: 500));
     animation = ac.drive(CurveTween(curve: Curves.linear));
     if(direction > 0) {
@@ -79,7 +90,7 @@ class _RolodexItem<T> {
     } else if(direction < 0) {
       ac.reverse(from: 1);
     } else {
-      ac.value = 1;
+      ac.forward();
     }
     animation.addStatusListener((status) {
       if(status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
@@ -123,7 +134,6 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
   final List<_RolodexItem> items = List<_RolodexItem>();
   int direction = 1;
   int _nextKey = 0;
-
   Key get nextKey => ValueKey<int>(_nextKey++);
 
   @override
@@ -131,6 +141,13 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
     super.initState();
     final card = newItem(widget, 0);
     items.add(card);
+  }
+
+  @override
+  void dispose() {
+    items.forEach((item) => item.dispose());
+    items.clear();
+    super.dispose();
   }
 
   _RolodexItem newItem(Rolodex widget, int direction) => _RolodexItem<T>(nextKey, widget, this, direction);
@@ -166,7 +183,8 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
             items.add(newItem(widget, 0));
             items.add(newItem(lastCard.rolodex, -1));
           } else {
-            items[0].ac.reverse();
+            final firstItem = items.removeAt(0);
+            items.insert(0, newItem(firstItem.rolodex, -1));
             items.insert(0, newItem(widget, 0));
           }
           while(items.length > Rolodex.maxItems) {
@@ -197,6 +215,10 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
         for(var i = 0; i < idx; i++)
           items[i].dispose();
         items.removeRange(0, idx);
+        if(item.direction != 0) {
+          items.removeAt(0).dispose();
+          items.insert(0, newItem(item.rolodex, 0));
+        }
       });
     } else {
       setState(() {
