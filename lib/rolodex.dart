@@ -14,8 +14,9 @@ int comparableComparator(dynamic a, dynamic b) {
 
 class _RolodexCard<T> extends StatelessWidget {
   final _RolodexItem item;
+  final _RolodexItem topItem;
 
-  _RolodexCard(this.item): super(key: item.key);
+  _RolodexCard(this.item, this.topItem): super(key: item.key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +24,21 @@ class _RolodexCard<T> extends StatelessWidget {
       animation: item.animation,
       builder: (context, child) {
         Widget w = item.rolodex.builder(context);
+        if(topItem != null) {
+          final w0 = w;
+          w = AnimatedBuilder(
+            animation: topItem.animation,
+            builder: (context, _) {
+              return DecoratedBox(
+                child: w0,
+                decoration: BoxDecoration(
+                  color: Colors.black26.withOpacity(topItem.animation.value * 0.6),
+                ),
+                position: DecorationPosition.foreground,
+              );
+            }
+          );
+        }
         return Transform(
           origin: Offset.zero,
           transform: Matrix4.diagonal3Values(1.0, item.animation.value, 1.0),
@@ -149,7 +165,10 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Stack(
-      children: items.map((item) => _RolodexCard(item)).toList(),
+      children: [
+        for(var i = 0; i < items.length; i++)
+          _RolodexCard(items[i], i < items.length-1 ? items[i+1]: null)
+      ],
     );
   }
 
