@@ -21,6 +21,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final value = counter;
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
@@ -31,19 +32,21 @@ class _MyAppState extends State<MyApp> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Rolodex(
-              value: counter,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: const Border.fromBorderSide(const BorderSide(color: Colors.grey)),
+              value: value,
+              builder: (context) => Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: const Border.fromBorderSide(const BorderSide(color: Colors.grey)),
 //                border: Border.all(color: Colors.grey),
-                borderRadius: const BorderRadius.all(const Radius.circular(3.0)),
-              ),
-              builder: (context, value) => SizedBox(
-                width: 40,
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text("$value", style: TextStyle(fontSize: 20), softWrap: false, overflow: TextOverflow.fade,),
+                  borderRadius: const BorderRadius.all(const Radius.circular(3.0)),
+                ),
+                child: SizedBox(
+                  width: 40,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text("$value", style: TextStyle(fontSize: 20), softWrap: false, overflow: TextOverflow.fade,),
+                    ),
                   ),
                 ),
               ),
