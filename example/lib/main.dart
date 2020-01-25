@@ -32,16 +32,14 @@ class _MyAppState extends State<MyApp> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Rolodex(
+              theme: const RolodexThemeData(
+//                cardColor: Colors.black,
+//                clipBorderRadius: BorderRadius.all(Radius.circular(10)),
+                alwaysShowBackground: true,
+              ),
               value: value,
-              builder: (context) => SizedBox(
-                width: 100,
-                height: 100,
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Text("$value", style: TextStyle(fontSize: 40), softWrap: false, overflow: TextOverflow.fade,),
-                  ),
-                ),
+              builder: (context) => Text("$value",
+                style: TextStyle(fontSize: 40)
               ),
             ),
             ButtonBar(

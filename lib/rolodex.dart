@@ -2,6 +2,163 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+class RolodexThemeData {
+  static final RolodexThemeData defaults = RolodexThemeData(
+    cardColor: Color.fromARGB(255, 255, 255, 255),
+    shadowColor: Color.fromARGB(128, 128, 128, 128),
+    alwaysShowBackground: false,
+    maxCards: 3,
+    animationDuration: const Duration(milliseconds: 500),
+    animationCurve: Curves.linear,
+    clipBorderRadius: BorderRadius.zero,
+  );
+
+  static final RolodexThemeData empty = RolodexThemeData();
+
+  // Card color.
+  final Color cardColor;
+
+  // Shadow color.
+  final Color shadowColor;
+
+  // If [true] then card background will be shown even when no cards are in motion
+  final bool alwaysShowBackground;
+
+  // The maximum number of cards in flight, including the bottom card.
+  final int maxCards;
+
+  // The the time it takes for a card to drop.
+  final Duration animationDuration;
+
+  // Animation curve.
+  final Curve animationCurve;
+
+  // Border radius for clip rect.
+  final BorderRadius clipBorderRadius;
+
+  const RolodexThemeData({
+    this.cardColor,
+    this.shadowColor,
+    this.alwaysShowBackground,
+    this.maxCards,
+    this.animationDuration,
+    this.animationCurve,
+    this.clipBorderRadius,
+
+  });
+
+  static RolodexThemeData combine(
+      RolodexThemeData theme, RolodexThemeData defaults) {
+    if (defaults == null || defaults.isEmpty()) {
+      return theme ?? empty;
+    } else if (theme == null || theme.isEmpty()) {
+      return defaults ?? empty;
+    } else if (theme.isFull()) {
+      return theme;
+    } else {
+      return RolodexThemeData(
+        cardColor: theme.cardColor ?? defaults.cardColor,
+        shadowColor: theme.shadowColor ?? defaults.shadowColor,
+        alwaysShowBackground: theme.alwaysShowBackground ?? defaults.alwaysShowBackground,
+        maxCards: theme.maxCards ?? defaults.maxCards,
+        animationDuration: theme.animationDuration ?? defaults.animationDuration,
+        animationCurve: theme.animationCurve ?? defaults.animationCurve,
+        clipBorderRadius: theme.clipBorderRadius ?? defaults.clipBorderRadius,
+      );
+    }
+  }
+
+  RolodexThemeData nullIfEmpty() {
+    return isEmpty() ? null : this;
+  }
+
+  bool isEmpty() {
+    return this == empty;
+  }
+
+  bool isFull() {
+    return this.cardColor != null &&
+        this.shadowColor != null &&
+        this.alwaysShowBackground != null &&
+        this.maxCards != null &&
+        this.animationDuration != null &&
+        this.animationCurve != null &&
+        this.clipBorderRadius != null;
+  }
+
+  bool operator ==(dynamic o) {
+    if (identical(this, o)) {
+      return true;
+    } else if (o is RolodexThemeData) {
+      return this.cardColor == o.cardColor &&
+          this.shadowColor == o.shadowColor &&
+          this.maxCards == o.maxCards &&
+          this.alwaysShowBackground == o.alwaysShowBackground &&
+          this.animationDuration == o.animationDuration &&
+          this.animationCurve == o.animationCurve &&
+          this.clipBorderRadius == o.clipBorderRadius;
+    } else {
+      return false;
+    }
+  }
+
+  int get hashCode {
+    return 0; // we don't care
+  }
+
+  static RolodexThemeData of(BuildContext context,
+      {bool rebuildOnChange = true}) {
+    final notifier = rebuildOnChange
+        ? context.dependOnInheritedWidgetOfExactType<_RolodexThemeNotifier>()
+        : context.findAncestorWidgetOfExactType<_RolodexThemeNotifier>();
+    return notifier?.themeData ?? defaults;
+  }
+
+  static RolodexThemeData withDefaults(
+      RolodexThemeData theme, BuildContext context,
+      {bool rebuildOnChange = true}) {
+    if (theme != null && theme.isFull()) {
+      return theme;
+    } else {
+      return combine(
+          combine(theme, of(context, rebuildOnChange: rebuildOnChange)),
+          defaults);
+    }
+  }
+}
+
+class RolodexTheme extends StatelessWidget {
+  final RolodexThemeData data;
+  final Widget child;
+
+  RolodexTheme({@required this.data, @required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    _RolodexThemeNotifier n =
+    context.dependOnInheritedWidgetOfExactType<_RolodexThemeNotifier>();
+    return _RolodexThemeNotifier(
+      themeData: RolodexThemeData.combine(data, n?.themeData),
+      child: this.child,
+    );
+  }
+}
+
+/// Makes an [ExpandableController] available to the widget subtree.
+/// Useful for making multiple [Expandable] widgets synchronized with a single controller.
+class _RolodexThemeNotifier extends InheritedWidget {
+  final RolodexThemeData themeData;
+
+  _RolodexThemeNotifier({@required this.themeData, @required Widget child})
+      : super(child: child);
+
+  @override
+  bool updateShouldNotify(InheritedWidget oldWidget) {
+    return !(oldWidget is _RolodexThemeNotifier &&
+        oldWidget.themeData == themeData);
+  }
+}
+
 // A comparator that compares comparable values
 int comparableComparator(dynamic a, dynamic b) {
   if(a == null || b == null)
@@ -25,12 +182,12 @@ class _RolodexCard<T> extends StatelessWidget {
       animation: item.animation,
       builder: (context, child) {
         Widget w = item.rolodex.builder(context);
-
-        if(item.direction != 0 || topItem != null) {
+        final theme = item.theme;
+        if(theme.alwaysShowBackground || (item.direction != 0 || topItem != null)) {
           w = DecoratedBox(
             child: w,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor,
             ),
             position: DecorationPosition.background,
           );
@@ -43,7 +200,7 @@ class _RolodexCard<T> extends StatelessWidget {
               return DecoratedBox(
                 child: w0,
                 decoration: BoxDecoration(
-                  color: Colors.black26.withOpacity(topItem.animation.value * 0.6),
+                  color: theme.shadowColor.withOpacity(topItem.animation.value),
 //                    color: Colors.black26.withOpacity((1.0 - item.animation.value + topItem.animation.value) * 0.6),
                 ),
                 position: DecorationPosition.foreground,
@@ -52,12 +209,14 @@ class _RolodexCard<T> extends StatelessWidget {
           );
         }
 
-        if(item.direction != 0 || item.animation.value < 1 || (topItem?.animation?.value ?? 1) < 1) {
-          w = ClipRRect(
-            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
-            child: w,
-            clipBehavior: Clip.antiAlias,
-          );
+        if(theme.clipBorderRadius != BorderRadius.zero) {
+          if(item.direction != 0 || theme.alwaysShowBackground || item.animation.value < 1 || (topItem?.animation?.value ?? 1) < 1) {
+            w = ClipRRect(
+              borderRadius: theme.clipBorderRadius,
+              child: w,
+              clipBehavior: Clip.antiAlias,
+            );
+          }
         }
 
         if(item.direction == 0) {
@@ -83,7 +242,7 @@ class _RolodexItem<T> {
   final int direction;
 
   _RolodexItem(this.key, this.rolodex, this.state, this.direction) {
-    ac = AnimationController(vsync: state, lowerBound: 0, upperBound: 1, duration: const Duration(milliseconds: 500));
+    ac = AnimationController(vsync: state, lowerBound: 0, upperBound: 1, duration: theme.animationDuration);
     animation = ac.drive(CurveTween(curve: Curves.linear));
     if(direction > 0) {
       ac.forward();
@@ -98,6 +257,8 @@ class _RolodexItem<T> {
       }
     });
   }
+
+  RolodexThemeData get theme => state.theme;
 
   T get value => rolodex.value;
 
@@ -114,7 +275,7 @@ class Rolodex<T> extends StatefulWidget {
   final WidgetBuilder builder;
   final T value;
   final Comparator comparator;
-  static final maxItems = 3;
+  final RolodexThemeData theme;
 
   const Rolodex({
     @required
@@ -122,6 +283,7 @@ class Rolodex<T> extends StatefulWidget {
     @required
     this.value,
     this.comparator = comparableComparator,
+    this.theme,
   });
 
   @override
@@ -135,12 +297,11 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
   int direction = 1;
   int _nextKey = 0;
   Key get nextKey => ValueKey<int>(_nextKey++);
+  RolodexThemeData theme;
 
   @override
   void initState() {
     super.initState();
-    final card = newItem(widget, 0);
-    items.add(card);
   }
 
   @override
@@ -171,7 +332,7 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
             items.add(newItem(firstCard.rolodex, 0));
             items.add(newItem(widget, 1));
           }
-          while(items.length > Rolodex.maxItems) {
+          while(items.length > theme.maxCards) {
             items.removeAt(0)..dispose();
             items[0].ac.value = 1;
           }
@@ -187,17 +348,33 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
             items.insert(0, newItem(firstItem.rolodex, -1));
             items.insert(0, newItem(widget, 0));
           }
-          while(items.length > Rolodex.maxItems) {
+          while(items.length > theme.maxCards) {
             items.removeLast()..dispose();
           }
         }
       });
     }
+    theme = RolodexThemeData.withDefaults(widget.theme, context, rebuildOnChange: false);
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    theme = RolodexThemeData.withDefaults(widget.theme, context, rebuildOnChange: false);
+  }
+
+
+  @override
   Widget build(BuildContext context) {
+
+    if(items.isEmpty) {
+      final card = newItem(widget, 0);
+      items.add(card);
+    }
+
     return Stack(
+      alignment: AlignmentDirectional.topCenter,
+      fit: StackFit.loose,
       children: [
         for(var i = 0; i < items.length; i++)
           _RolodexCard(items[i], i < items.length-1 ? items[i+1]: null)
