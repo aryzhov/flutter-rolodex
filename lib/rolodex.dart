@@ -11,6 +11,8 @@ class RolodexThemeData {
     animationDuration: const Duration(milliseconds: 500),
     animationCurve: Curves.linear,
     clipBorderRadius: BorderRadius.zero,
+    cardFallDirection: AxisDirection.down,
+    cardStackAlignment:  AlignmentDirectional.center,
   );
 
   static final RolodexThemeData empty = RolodexThemeData();
@@ -36,6 +38,10 @@ class RolodexThemeData {
   // Border radius for clip rect.
   final BorderRadius clipBorderRadius;
 
+  final AxisDirection cardFallDirection;
+
+  final AlignmentGeometry cardStackAlignment;
+
   const RolodexThemeData({
     this.cardColor,
     this.shadowColor,
@@ -44,7 +50,8 @@ class RolodexThemeData {
     this.animationDuration,
     this.animationCurve,
     this.clipBorderRadius,
-
+    this.cardStackAlignment,
+    this.cardFallDirection,
   });
 
   static RolodexThemeData combine(
@@ -64,6 +71,8 @@ class RolodexThemeData {
         animationDuration: theme.animationDuration ?? defaults.animationDuration,
         animationCurve: theme.animationCurve ?? defaults.animationCurve,
         clipBorderRadius: theme.clipBorderRadius ?? defaults.clipBorderRadius,
+        cardStackAlignment: theme.cardStackAlignment ?? defaults.cardStackAlignment,
+        cardFallDirection: theme.cardFallDirection ?? defaults.cardFallDirection,
       );
     }
   }
@@ -83,7 +92,9 @@ class RolodexThemeData {
         this.maxCards != null &&
         this.animationDuration != null &&
         this.animationCurve != null &&
-        this.clipBorderRadius != null;
+        this.clipBorderRadius != null &&
+        this.cardStackAlignment != null &&
+        this.cardFallDirection != null;
   }
 
   bool operator ==(dynamic o) {
@@ -96,7 +107,9 @@ class RolodexThemeData {
           this.alwaysShowBackground == o.alwaysShowBackground &&
           this.animationDuration == o.animationDuration &&
           this.animationCurve == o.animationCurve &&
-          this.clipBorderRadius == o.clipBorderRadius;
+          this.clipBorderRadius == o.clipBorderRadius &&
+          this.cardStackAlignment == o.cardStackAlignment &&
+          this.cardFallDirection == o.cardFallDirection;
     } else {
       return false;
     }
@@ -224,13 +237,35 @@ class _RolodexCard<T> extends StatelessWidget {
         } else {
           return Transform(
             origin: Offset.zero,
-            transform: Matrix4.diagonal3Values(1.0, item.animation.value, 1.0),
+            alignment: _getTransformAlignment(theme.cardFallDirection),
+            transform: _getTransformMatrix(theme.cardFallDirection, item.animation.value),
             child: w,
           );
         }
       },
     );
   }
+
+  static _getTransformAlignment(AxisDirection ad) {
+    switch(ad) {
+      case AxisDirection.down: return AlignmentDirectional.topCenter;
+      case AxisDirection.up: return AlignmentDirectional.bottomCenter;
+      case AxisDirection.left: return AlignmentDirectional.centerEnd;
+      case AxisDirection.right: return AlignmentDirectional.centerStart;
+      default: return AlignmentDirectional.center;
+    }
+  }
+
+  static _getTransformMatrix(AxisDirection ad, double scale) {
+    switch(ad) {
+      case AxisDirection.down:
+      case AxisDirection.up: return Matrix4.diagonal3Values(1.0, scale, 1.0);
+      case AxisDirection.left:
+      case AxisDirection.right: return Matrix4.diagonal3Values(scale, 1.0, 1.0);
+      default: return Matrix4.diagonal3Values(scale, scale, 1.0);
+    }
+  }
+
 }
 
 class _RolodexItem<T> {
@@ -373,7 +408,7 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
     }
 
     return Stack(
-      alignment: AlignmentDirectional.topCenter,
+      alignment: theme.cardStackAlignment,
       fit: StackFit.loose,
       children: [
         for(var i = 0; i < items.length; i++)
