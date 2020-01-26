@@ -193,59 +193,63 @@ class _RolodexCard<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: item.animation,
-      builder: (context, child) {
-        Widget w = item.rolodex.child ?? item.rolodex.builder(context);
-        final theme = item.theme;
-        if(theme.alwaysShowBackground || (item.direction != 0 || topItem != null)) {
-          w = DecoratedBox(
-            child: w,
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-            ),
-            position: DecorationPosition.background,
-          );
-        }
-        if(topItem != null) {
-          final w0 = w;
-          w = AnimatedBuilder(
-            animation: topItem.animation,
-            builder: (context, _) {
-              return DecoratedBox(
-                child: w0,
-                decoration: BoxDecoration(
-                  color: theme.shadowColor.withOpacity(topItem.animation.value),
-//                    color: Colors.black26.withOpacity((1.0 - item.animation.value + topItem.animation.value) * 0.6),
-                ),
-                position: DecorationPosition.foreground,
-              );
-            }
-          );
-        }
+    final theme = item.theme;
 
-        if(theme.clipBorderRadius != BorderRadius.zero) {
-          if(item.direction != 0 || theme.alwaysShowBackground || item.animation.value < 1 || (topItem?.animation?.value ?? 1) < 1) {
-            w = ClipRRect(
-              borderRadius: theme.clipBorderRadius,
-              child: w,
-              clipBehavior: Clip.antiAlias,
+    Widget w = item.rolodex.child;
+
+    if(item.direction != 0 || topItem != null || theme.alwaysShowBackground) {
+      w = DecoratedBox(
+        child: w,
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+        ),
+        position: DecorationPosition.background,
+      );
+    }
+
+    if(topItem != null) {
+      // add a "shadow" from the top item
+      final w1 = w;
+      w = AnimatedBuilder(
+          animation: topItem.animation,
+          builder: (context, _) {
+            return DecoratedBox(
+              child: w1,
+              decoration: BoxDecoration(
+                color: theme.shadowColor.withOpacity(topItem.animation.value),
+//                    color: Colors.black26.withOpacity((1.0 - item.animation.value + topItem.animation.value) * 0.6),
+              ),
+              position: DecorationPosition.foreground,
             );
           }
-        }
+      );
+    }
 
-        if(item.direction == 0) {
-          return w;
-        } else {
+    if(theme.clipBorderRadius != BorderRadius.zero) {
+      if(item.direction != 0 || topItem != null || theme.alwaysShowBackground) {
+        w = ClipRRect(
+          borderRadius: theme.clipBorderRadius,
+          child: w,
+          clipBehavior: Clip.antiAlias,
+        );
+      }
+    }
+
+    if(item.direction == 0) {
+      return w;
+    } else {
+      return AnimatedBuilder(
+        animation: item.animation,
+        builder: (context, child) {
           return Transform(
             origin: Offset.zero,
             alignment: _getTransformAlignment(theme.cardFallDirection),
             transform: _getTransformMatrix(theme.cardFallDirection, item.animation.value),
             child: w,
           );
-        }
-      },
-    );
+        },
+      );
+    }
   }
 
   static _getTransformAlignment(AxisDirection ad) {
@@ -279,20 +283,20 @@ class _RolodexItem<T> {
   final int direction;
 
   _RolodexItem(this.key, this.rolodex, this.state, this.direction) {
-    ac = AnimationController(vsync: state, lowerBound: 0, upperBound: 1, duration: theme.animationDuration);
-    animation = ac.drive(CurveTween(curve: Curves.linear));
-    if(direction > 0) {
-      ac.forward();
-    } else if(direction < 0) {
-      ac.reverse(from: 1);
-    } else {
-      ac.forward();
-    }
-    animation.addStatusListener((status) {
-      if(status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
-        state.itemAnimationDone(this);
+    if(direction != 0) {
+      ac = AnimationController(vsync: state, lowerBound: 0, upperBound: 1, duration: theme.animationDuration);
+      animation = ac.drive(CurveTween(curve: Curves.linear));
+      if(direction > 0) {
+        ac.forward();
+      } else {
+        ac.reverse(from: 1);
       }
-    });
+      animation.addStatusListener((status) {
+        if(status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
+          state.itemAnimationDone(this);
+        }
+      });
+    }
   }
 
   RolodexThemeData get theme => state.theme;
@@ -302,27 +306,26 @@ class _RolodexItem<T> {
   bool get visible => ac.value > 0;
 
   void dispose() {
-    ac.dispose();
+    ac?.dispose();
   }
 }
 
 
 class Rolodex<T> extends StatefulWidget {
 
-  final WidgetBuilder builder;
   final Widget child;
   final T value;
   final Comparator comparator;
   final RolodexThemeData theme;
 
   const Rolodex({
-    this.builder,
+    @required
     this.child,
     @required
     this.value,
     this.comparator = comparableComparator,
     this.theme,
-  }): assert(builder != null || child != null);
+  });
 
   @override
   _RolodexState createState() => _RolodexState<T>();

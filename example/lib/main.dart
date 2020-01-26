@@ -33,13 +33,16 @@ class _MyAppState extends State<MyApp> {
             Rolodex(
               theme: const RolodexThemeData(
 //                cardColor: Colors.black,
-//                clipBorderRadius: BorderRadius.all(Radius.circular(10)),
+                clipBorderRadius: BorderRadius.all(Radius.circular(10)),
 //                alwaysShowBackground: true,
 //                cardFallDirection: AxisDirection.left,
 //                cardStackAlignment: AlignmentDirectional.centerEnd,
               ),
               value: counter,
-              child: Text("$counter", style: TextStyle(fontSize: 40)
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Text("$counter", style: TextStyle(fontSize: 40)
+                ),
               ),
             ),
             Row(
