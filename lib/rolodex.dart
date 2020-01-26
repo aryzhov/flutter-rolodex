@@ -38,8 +38,10 @@ class RolodexThemeData {
   // Border radius for clip rect.
   final BorderRadius clipBorderRadius;
 
+  // The direction in which the cards "fall": down, up, left, right.
   final AxisDirection cardFallDirection;
 
+  // Defines the alignment point in case if cards have different sizes.
   final AlignmentGeometry cardStackAlignment;
 
   const RolodexThemeData({
@@ -270,7 +272,7 @@ class _RolodexCard<T> extends StatelessWidget {
 
 class _RolodexItem<T> {
   final Rolodex rolodex;
-  final ValueKey<T> key;
+  final Key key;
   final _RolodexState<T> state;
   AnimationController ac;
   Animation<double> animation;
@@ -381,6 +383,7 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
             items.add(newItem(lastCard.rolodex, -1));
           } else {
             final firstItem = items.removeAt(0);
+            firstItem.dispose();
             items.insert(0, newItem(firstItem.rolodex, -1));
             items.insert(0, newItem(widget, 0));
           }

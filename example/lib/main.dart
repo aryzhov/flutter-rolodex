@@ -42,6 +42,16 @@ class _MyAppState extends State<MyApp> {
               child: Text("$counter", style: TextStyle(fontSize: 40)
               ),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                for(var c in "$counter".split(""))
+                  Rolodex(
+                    value: c,
+                    child: Text(c, style: TextStyle(fontSize: 40))
+                  ),
+              ],
+            ),
             ButtonBar(
               alignment: MainAxisAlignment.center,
               children: <Widget>[
