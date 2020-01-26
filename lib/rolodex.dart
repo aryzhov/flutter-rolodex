@@ -1,11 +1,24 @@
-import 'dart:async';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+enum RolodexDirection {
+
+  // Forward when new value is greater, backward when new value is less
+  normal,
+
+  // Forward when new value is less, backward when new value is greater
+  reversed,
+
+  // Always forward
+  forward,
+
+  // Always backward
+  backward,
+}
+
 class RolodexThemeData {
-  static final RolodexThemeData defaults = RolodexThemeData(
-    cardColor: Color.fromARGB(255, 255, 255, 255),
-    shadowColor: Color.fromARGB(128, 128, 128, 128),
+  static final RolodexThemeData defaults = const RolodexThemeData(
+    cardColor: const Color.fromARGB(255, 255, 255, 255),
+    shadowColor: const Color.fromARGB(128, 128, 128, 128),
     alwaysShowBackground: false,
     maxCards: 3,
     animationDuration: const Duration(milliseconds: 500),
@@ -13,9 +26,10 @@ class RolodexThemeData {
     clipBorderRadius: BorderRadius.zero,
     cardFallDirection: AxisDirection.down,
     cardStackAlignment:  AlignmentDirectional.center,
+    direction: RolodexDirection.normal,
   );
 
-  static final RolodexThemeData empty = RolodexThemeData();
+  static final RolodexThemeData empty = const RolodexThemeData();
 
   // Card color.
   final Color cardColor;
@@ -44,6 +58,8 @@ class RolodexThemeData {
   // Defines the alignment point in case if cards have different sizes.
   final AlignmentGeometry cardStackAlignment;
 
+  final RolodexDirection direction;
+
   const RolodexThemeData({
     this.cardColor,
     this.shadowColor,
@@ -54,6 +70,7 @@ class RolodexThemeData {
     this.clipBorderRadius,
     this.cardStackAlignment,
     this.cardFallDirection,
+    this.direction,
   });
 
   static RolodexThemeData combine(
@@ -75,6 +92,7 @@ class RolodexThemeData {
         clipBorderRadius: theme.clipBorderRadius ?? defaults.clipBorderRadius,
         cardStackAlignment: theme.cardStackAlignment ?? defaults.cardStackAlignment,
         cardFallDirection: theme.cardFallDirection ?? defaults.cardFallDirection,
+        direction: theme.direction ?? defaults.direction,
       );
     }
   }
@@ -96,7 +114,8 @@ class RolodexThemeData {
         this.animationCurve != null &&
         this.clipBorderRadius != null &&
         this.cardStackAlignment != null &&
-        this.cardFallDirection != null;
+        this.cardFallDirection != null &&
+        this.direction != null;
   }
 
   bool operator ==(dynamic o) {
@@ -111,7 +130,8 @@ class RolodexThemeData {
           this.animationCurve == o.animationCurve &&
           this.clipBorderRadius == o.clipBorderRadius &&
           this.cardStackAlignment == o.cardStackAlignment &&
-          this.cardFallDirection == o.cardFallDirection;
+          this.cardFallDirection == o.cardFallDirection &&
+          this.direction == o.direction;
     } else {
       return false;
     }
@@ -360,8 +380,16 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
     final last = oldWidget.value;
     if(last != widget.value) {
       final d0 = direction;
-      final d = widget.comparator(widget.value, last);
-      direction = d >= 0 ? 1: -1;
+      if (theme.direction == RolodexDirection.forward) {
+        direction = 1;
+      } else if(theme.direction == RolodexDirection.backward) {
+        direction = -1;
+      } else {
+        final comp = widget.comparator(widget.value, last);
+        direction = (comp >= 0) == (theme.direction == RolodexDirection.normal) ? 1: -1;
+      }
+
+      final d = direction;
       setState(() {
         if(d >= 0) {
           if(d0 > 0) {

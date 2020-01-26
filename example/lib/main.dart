@@ -51,6 +51,9 @@ class _MyAppState extends State<MyApp> {
                 for(var c in "$counter".split(""))
                   Rolodex(
                     value: c,
+                    theme: const RolodexThemeData(
+                      direction: RolodexDirection.reversed,
+                    ),
                     child: Text(c, style: TextStyle(fontSize: 40))
                   ),
               ],
