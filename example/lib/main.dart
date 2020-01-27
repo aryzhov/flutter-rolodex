@@ -32,6 +32,7 @@ class _MyAppState extends State<MyApp> {
           children: <Widget>[
             Rolodex(
               theme: const RolodexThemeData(
+//                direction: RolodexDirection.reversed,
 //                cardColor: Colors.black,
                 clipBorderRadius: BorderRadius.all(Radius.circular(10)),
 //                alwaysShowBackground: true,
@@ -40,23 +41,28 @@ class _MyAppState extends State<MyApp> {
               ),
               value: counter,
               child: Padding(
-                padding: EdgeInsets.all(20),
+                padding: EdgeInsets.all(10),
                 child: Text("$counter", style: TextStyle(fontSize: 40)
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                for(var c in "$counter".split(""))
-                  Rolodex(
-                    value: c,
-                    theme: const RolodexThemeData(
-                      direction: RolodexDirection.reversed,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  for(var c in "$counter".split("").asMap().entries)
+                    Rolodex(
+                      key: ValueKey("$counter".length-c.key),
+                      value: c.value,
+                      theme: const RolodexThemeData(
+                        mode: RolodexMode.splitFlap,
+                        direction: RolodexDirection.forward,
+                      ),
+                      child: Text(c.value, style: TextStyle(fontSize: 40))
                     ),
-                    child: Text(c, style: TextStyle(fontSize: 40))
-                  ),
-              ],
+                ],
+              ),
             ),
             ButtonBar(
               alignment: MainAxisAlignment.center,
