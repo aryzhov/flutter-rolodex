@@ -32,17 +32,19 @@ class _MyAppState extends State<MyApp> {
           children: <Widget>[
             Rolodex(
               theme: const RolodexThemeData(
-//                direction: RolodexDirection.reversed,
-//                cardColor: Colors.black,
-                clipBorderRadius: BorderRadius.all(Radius.circular(10)),
-//                alwaysShowBackground: true,
-//                cardFallDirection: AxisDirection.left,
-//                cardStackAlignment: AlignmentDirectional.centerEnd,
+                direction: RolodexDirection.reversed,
+                cardColor: Colors.blue,
+                shadowColor: Colors.indigo,
+                clipBorderRadius: BorderRadius.all(Radius.circular(6)),
+                alwaysShowBackground: true,
               ),
               value: counter,
-              child: Padding(
-                padding: EdgeInsets.all(10),
-                child: Text("$counter", style: TextStyle(fontSize: 40)
+              child: SizedBox(
+                width: 60,
+                height: 60,
+                child: Center(
+                  child: Text("$counter", style: TextStyle(fontSize: 40, color: Colors.white,), softWrap: false, overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ),
