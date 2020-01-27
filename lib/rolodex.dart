@@ -534,13 +534,14 @@ class Rolodex<T> extends StatefulWidget {
   final RolodexThemeData theme;
 
   const Rolodex({
+    Key key,
     @required
     this.child,
     @required
     this.value,
     this.comparator = comparableComparator,
     this.theme,
-  });
+  }): super(key: key);
 
   @override
   _RolodexState createState() => _RolodexState<T>();
