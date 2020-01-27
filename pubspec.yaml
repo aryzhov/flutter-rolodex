@@ -1,6 +1,6 @@
 name: rolodex
-description: A Flutter widget that represents a roll of cards.
-version: 0.0.1
+description: A Flutter widget that animates value changes as a falling cards.
+version: 1.0.0
 homepage: https://github.com/aryzhov/flutter-rolodex
 
 environment:
