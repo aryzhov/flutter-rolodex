@@ -1,11 +1,11 @@
 # Rolodex
 
 A Flutter widget that animates a value change by simulating a card with the new value falling 
-on top of the previous value. Useful for indicating a change in a displayed value.
-The visual representation is completely customizable, making it usable in a wide range of scenarios, including
-the display of time, stock tickers, sensor data, etc.
+on top of the previous value. Useful for indicating a change in the displayed value.
+You can use it for showing scores, stock quotes, bonus points, etc.
 
-![animated_image](http://g.recordit.co/1dYVAk6Zq2.gif)
+![animated image](https://github.com/aryzhov/rolodex/blob/master/doc/rolodex.gif?raw=true)
+
 
 ## Getting Started
 
