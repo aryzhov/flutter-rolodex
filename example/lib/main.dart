@@ -43,7 +43,14 @@ class _MyAppState extends State<MyApp> {
                 width: 60,
                 height: 60,
                 child: Center(
-                  child: Text("$counter", style: TextStyle(fontSize: 40, color: Colors.white,), softWrap: false, overflow: TextOverflow.ellipsis,
+                  child: Text(
+                    "$counter",
+                    style: TextStyle(
+                      fontSize: 40,
+                      color: Colors.white,
+                    ),
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
@@ -53,16 +60,15 @@ class _MyAppState extends State<MyApp> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  for(var c in "$counter".split("").asMap().entries)
+                  for (var c in "$counter".split("").asMap().entries)
                     Rolodex(
-                      key: ValueKey("$counter".length-c.key),
-                      value: c.value,
-                      theme: const RolodexThemeData(
-                        mode: RolodexMode.splitFlap,
-                        direction: RolodexDirection.forward,
-                      ),
-                      child: Text(c.value, style: TextStyle(fontSize: 40))
-                    ),
+                        key: ValueKey("$counter".length - c.key),
+                        value: c.value,
+                        theme: const RolodexThemeData(
+                          mode: RolodexMode.splitFlap,
+                          direction: RolodexDirection.forward,
+                        ),
+                        child: Text(c.value, style: TextStyle(fontSize: 40))),
                 ],
               ),
             ),
