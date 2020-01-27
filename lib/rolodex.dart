@@ -618,7 +618,6 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
             items.removeLast()..dispose();
           }
         }
-        print("${items.map((e) => e.value).toList()} ${items.map((e) => e.direction).toList()}");
       });
     }
     theme = RolodexThemeData.withDefaults(widget.theme, context, rebuildOnChange: false);
@@ -682,13 +681,11 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
           items.removeAt(0).dispose();
           items.insert(0, newItem(item.rolodex, 0));
         }
-        print("${items.map((e) => e.value).toList()} ${items.map((e) => e.direction).toList()}");
       });
     } else {
       setState(() {
         items.removeAt(idx).dispose();
       });
-      print("${items.map((e) => e.value).toList()} ${items.map((e) => e.direction).toList()}");
     }
   }
 }
