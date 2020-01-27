@@ -4,7 +4,7 @@ A Flutter widget that animates a value change by simulating a card with the new 
 on top of the previous value. Useful for indicating a change in the displayed value.
 You can use it for showing scores, stock quotes, bonus points, etc.
 
-![animated image](https://github.com/aryzhov/rolodex/blob/master/doc/rolodex.gif?raw=true)
+![animated image](https://raw.githubusercontent.com/aryzhov/flutter-rolodex/master/doc/rolodex.gif)
 
 
 ## Getting Started
