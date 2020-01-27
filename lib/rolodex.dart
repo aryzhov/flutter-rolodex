@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Card fall direction.
 enum RolodexDirection {
   // Forward when new value is greater, backward when new value is less
   normal,
@@ -14,6 +15,7 @@ enum RolodexDirection {
   backward,
 }
 
+/// Mode of operation.
 enum RolodexMode {
   // Falling cards simulation
   falling,
@@ -21,6 +23,7 @@ enum RolodexMode {
   splitFlap,
 }
 
+/// Theme settings.
 class RolodexThemeData {
   static final RolodexThemeData defaults = const RolodexThemeData(
     cardColor: const Color.fromARGB(255, 255, 255, 255),
@@ -179,6 +182,7 @@ class RolodexThemeData {
   }
 }
 
+/// Specifies theme settings for the widget tree underneath it.
 class RolodexTheme extends StatelessWidget {
   final RolodexThemeData data;
   final Widget child;
@@ -567,10 +571,15 @@ class _RolodexItem<T> {
   }
 }
 
+/// Simulates value change events as falling cards.
 class Rolodex<T> extends StatefulWidget {
+  /// Specifies the latest value
   final Widget child;
+  /// The latest value
   final T value;
+  /// The comparator (optional). Allows to determine the order of falling cards.
   final Comparator comparator;
+  /// Theme settings. These will override global settings defined in [RolodexTheme].
   final RolodexThemeData theme;
 
   const Rolodex({
