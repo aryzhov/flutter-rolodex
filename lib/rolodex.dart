@@ -15,6 +15,13 @@ enum RolodexDirection {
   backward,
 }
 
+enum RolodexMode {
+  // Falling cards simulation
+  falling,
+  // Split-flap simulation
+  splitFlap,
+}
+
 class RolodexThemeData {
   static final RolodexThemeData defaults = const RolodexThemeData(
     cardColor: const Color.fromARGB(255, 255, 255, 255),
@@ -22,11 +29,12 @@ class RolodexThemeData {
     alwaysShowBackground: false,
     maxCards: 3,
     animationDuration: const Duration(milliseconds: 500),
-    animationCurve: Curves.linear,
+    animationCurve: Curves.easeOut,
     clipBorderRadius: BorderRadius.zero,
     cardFallDirection: AxisDirection.down,
     cardStackAlignment:  AlignmentDirectional.center,
     direction: RolodexDirection.normal,
+    mode: RolodexMode.falling,
   );
 
   static final RolodexThemeData empty = const RolodexThemeData();
@@ -60,6 +68,8 @@ class RolodexThemeData {
 
   final RolodexDirection direction;
 
+  final RolodexMode mode;
+
   const RolodexThemeData({
     this.cardColor,
     this.shadowColor,
@@ -71,6 +81,7 @@ class RolodexThemeData {
     this.cardStackAlignment,
     this.cardFallDirection,
     this.direction,
+    this.mode,
   });
 
   static RolodexThemeData combine(
@@ -93,6 +104,7 @@ class RolodexThemeData {
         cardStackAlignment: theme.cardStackAlignment ?? defaults.cardStackAlignment,
         cardFallDirection: theme.cardFallDirection ?? defaults.cardFallDirection,
         direction: theme.direction ?? defaults.direction,
+        mode: theme.mode ?? defaults.mode,
       );
     }
   }
@@ -115,7 +127,8 @@ class RolodexThemeData {
         this.clipBorderRadius != null &&
         this.cardStackAlignment != null &&
         this.cardFallDirection != null &&
-        this.direction != null;
+        this.direction != null &&
+        this.mode != null;
   }
 
   bool operator ==(dynamic o) {
@@ -131,7 +144,8 @@ class RolodexThemeData {
           this.clipBorderRadius == o.clipBorderRadius &&
           this.cardStackAlignment == o.cardStackAlignment &&
           this.cardFallDirection == o.cardFallDirection &&
-          this.direction == o.direction;
+          this.direction == o.direction &&
+          this.mode == o.mode;
     } else {
       return false;
     }
@@ -197,11 +211,11 @@ class _RolodexThemeNotifier extends InheritedWidget {
 // A comparator that compares comparable values
 int comparableComparator(dynamic a, dynamic b) {
   if(a == null || b == null)
-    return -1;
+    return a == b ? 0: a == null ? -1: 1;
   if(a is Comparable) {
     return a.compareTo(b);
   } else {
-    return 1;
+    return a == b ? 0: 1;
   }
 }
 
@@ -278,7 +292,6 @@ class _RolodexCard<T> extends StatelessWidget {
       case AxisDirection.up: return AlignmentDirectional.bottomCenter;
       case AxisDirection.left: return AlignmentDirectional.centerEnd;
       case AxisDirection.right: return AlignmentDirectional.centerStart;
-      default: return AlignmentDirectional.center;
     }
   }
 
@@ -288,11 +301,193 @@ class _RolodexCard<T> extends StatelessWidget {
       case AxisDirection.up: return Matrix4.diagonal3Values(1.0, scale, 1.0);
       case AxisDirection.left:
       case AxisDirection.right: return Matrix4.diagonal3Values(scale, 1.0, 1.0);
-      default: return Matrix4.diagonal3Values(scale, scale, 1.0);
     }
   }
 
 }
+
+enum _SplitFlapCardPart {
+  topHalf,
+  bottomHalf,
+  full,
+}
+
+class _SplitFlapCardClipper extends CustomClipper<Rect> {
+
+  final _SplitFlapCardPart part;
+  final AxisDirection direction;
+
+  const _SplitFlapCardClipper(this.part, this.direction);
+
+  @override
+  Rect getClip(Size size) {
+    switch(part) {
+      case _SplitFlapCardPart.full: return Rect.fromLTRB(0, 0, size.width, size.height);
+      case _SplitFlapCardPart.topHalf:
+        switch(direction) {
+          case AxisDirection.down: return Rect.fromLTRB(0, 0, size.width, size.height/2);
+          case AxisDirection.up: return Rect.fromLTRB(0, size.height/2, size.width, size.height);
+          case AxisDirection.left: return Rect.fromLTRB(0, 0, size.width/2, size.height);
+          case AxisDirection.right: return Rect.fromLTRB(size.width/2, 0, size.width, size.height);
+        }
+        assert(false); return null;
+      case _SplitFlapCardPart.bottomHalf:
+        switch(direction) {
+          case AxisDirection.down: return Rect.fromLTRB(0, size.height/2, size.width, size.height);
+          case AxisDirection.up: return Rect.fromLTRB(0, 0, size.width, size.height/2);
+          case AxisDirection.left: return Rect.fromLTRB(size.width/2, 0, size.width, size.height);
+          case AxisDirection.right: return Rect.fromLTRB(0, 0, size.width/2, size.height);
+        }
+        assert(false); return null;
+      default:
+        assert(false); return null;
+    }
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Rect> oldClipper) {
+    if(oldClipper is _SplitFlapCardClipper) {
+      return oldClipper.part != part || oldClipper.direction != direction;
+    } else {
+      return true;
+    }
+  }
+
+}
+
+class _SplitFlapCard<T> extends StatelessWidget {
+  final _RolodexItem item;
+  final _RolodexItem prevItem;
+  final _SplitFlapCardPart part;
+
+  _SplitFlapCard(this.item, this.prevItem, this.part);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = item.theme;
+
+    Widget addBackground(Widget w) {
+      if (item.direction != 0 || part != _SplitFlapCardPart.full || theme.alwaysShowBackground) {
+        return DecoratedBox(
+          child: w,
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+          ),
+          position: DecorationPosition.background,
+        );
+      } else {
+        return w;
+      }
+    }
+
+    Widget clipBackground(Widget w) {
+      if (theme.clipBorderRadius != BorderRadius.zero) {
+        if (item.direction != 0 || part != _SplitFlapCardPart.full || theme.alwaysShowBackground) {
+          return ClipRRect(
+            borderRadius: theme.clipBorderRadius,
+            child: w,
+            clipBehavior: Clip.antiAlias,
+          );
+        }
+      }
+      return w;
+    }
+
+    Widget clipPart(Widget w, _SplitFlapCardPart part) {
+      if(part == _SplitFlapCardPart.full) {
+        return w;
+      } else {
+        return ClipRect(
+          clipper: _SplitFlapCardClipper(part, theme.cardFallDirection),
+          child: w,
+        );
+      }
+    }
+
+    Widget addShadow(Widget w, double value) {
+      return DecoratedBox(
+        child: w,
+        decoration: BoxDecoration(
+          color: theme.shadowColor.withOpacity(value),
+        ),
+        position: DecorationPosition.foreground,
+      );
+    }
+
+    Widget addShadowAnimation(Widget w, Animation<double> animation, double Function(double d) func) {
+      return AnimatedBuilder(
+          animation: animation,
+          builder: (context, _) {
+            return addShadow(w, func(animation.value));
+          }
+      );
+    }
+
+    if(part == _SplitFlapCardPart.topHalf) {
+//      return clipPart(clipBackground(addBackground(item.rolodex.child)), part);
+//      return clipPart(addShadow(clipBackground(addBackground(item.rolodex.child)), prevItem.animation, (v) => (v > 0.5 ? 0: (1.0 - v * 2))), part);
+      return clipPart(clipBackground(addShadowAnimation(addBackground(item.rolodex.child), prevItem.animation, (v) => 0.5 - v * 0.5)), part);
+    }
+
+    if(part == _SplitFlapCardPart.bottomHalf) {
+      return clipPart(clipBackground(addShadowAnimation(addBackground(item.rolodex.child), prevItem.animation, (v) => v)), part);
+    }
+
+    if(item.direction == 0) {
+      return clipPart(clipBackground(addBackground(item.rolodex.child)), part);
+    }
+
+    Widget topHalfWidget = (addBackground(prevItem.rolodex.child));
+    Widget bottomHalfWidget = (addBackground(item.rolodex.child));
+
+//    Widget bottomHalfWidget = nexItem
+
+//    if(topItem != null) {
+//      // add a "shadow" from the top item
+//      final w1 = w;
+//      w = AnimatedBuilder(
+//          animation: topItem.animation,
+//          builder: (context, _) {
+//            return DecoratedBox(
+//              child: w1,
+//              decoration: BoxDecoration(
+//                color: theme.shadowColor.withOpacity(topItem.animation.value),
+//              ),
+//              position: DecorationPosition.foreground,
+//            );
+//          }
+//      );
+//    }
+
+    return AnimatedBuilder(
+      animation: item.animation,
+      builder: (context, child) {
+        final type = item.animation.value > 0.5 ? _SplitFlapCardPart.bottomHalf: _SplitFlapCardPart.topHalf;
+        Widget w = type == _SplitFlapCardPart.bottomHalf ? bottomHalfWidget: topHalfWidget;
+        w = clipBackground(addShadow(w, type == _SplitFlapCardPart.topHalf ? item.animation.value * 2 : 0));
+        w = clipPart(w, type);
+        return Transform(
+          origin: Offset.zero,
+          alignment: AlignmentDirectional.center,
+          transform: _getTransformMatrix(theme.cardFallDirection,
+              type == _SplitFlapCardPart.topHalf ? (1.0 - item.animation.value * 2): (item.animation.value * 2 - 1.0)),
+          child: w,
+        );
+      },
+    );
+  }
+
+  static _getTransformMatrix(AxisDirection ad, double scale) {
+    switch(ad) {
+      case AxisDirection.down:
+      case AxisDirection.up: return Matrix4.diagonal3Values(1.0, scale, 1.0);
+      case AxisDirection.left:
+      case AxisDirection.right: return Matrix4.diagonal3Values(scale, 1.0, 1.0);
+    }
+  }
+
+}
+
 
 class _RolodexItem<T> {
   final Rolodex rolodex;
@@ -422,6 +617,7 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
             items.removeLast()..dispose();
           }
         }
+        print("${items.map((e) => e.value).toList()} ${items.map((e) => e.direction).toList()}");
       });
     }
     theme = RolodexThemeData.withDefaults(widget.theme, context, rebuildOnChange: false);
@@ -442,13 +638,32 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
       items.add(card);
     }
 
+    final children = List<Widget>();
+    switch(theme.mode) {
+      case RolodexMode.falling:
+        for(var i = 0; i < items.length; i++)
+          children.add(_RolodexCard(items[i], i < items.length-1 ? items[i+1]: null));
+        break;
+      case RolodexMode.splitFlap:
+        if(items.length > 1 && items.last.direction != 0) {
+          children.add(_SplitFlapCard(items.last, items.last, _SplitFlapCardPart.topHalf));
+          children.add(_SplitFlapCard(items[0], items[1], _SplitFlapCardPart.bottomHalf));
+          for(var i = 1; i < items.length; i++) {
+            final item = items[i];
+            final prevItem = items[i - 1];
+            children.add(_SplitFlapCard(item, prevItem, _SplitFlapCardPart.full));
+          }
+        } else {
+          children.add(_SplitFlapCard(items[0], null, _SplitFlapCardPart.full));
+        }
+
+        break;
+    }
+
     return Stack(
       alignment: theme.cardStackAlignment,
       fit: StackFit.loose,
-      children: [
-        for(var i = 0; i < items.length; i++)
-          _RolodexCard(items[i], i < items.length-1 ? items[i+1]: null)
-      ],
+      children: children,
     );
   }
 
@@ -466,11 +681,13 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
           items.removeAt(0).dispose();
           items.insert(0, newItem(item.rolodex, 0));
         }
+        print("${items.map((e) => e.value).toList()} ${items.map((e) => e.direction).toList()}");
       });
     } else {
       setState(() {
         items.removeAt(idx).dispose();
       });
+      print("${items.map((e) => e.value).toList()} ${items.map((e) => e.direction).toList()}");
     }
   }
 }
