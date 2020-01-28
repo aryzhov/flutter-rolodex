@@ -50,7 +50,7 @@ class _MyAppState extends State<MyApp> {
                       color: Colors.white,
                     ),
                     softWrap: false,
-                    overflow: TextOverflow.ellipsis,
+                    overflow: TextOverflow.fade,
                   ),
                 ),
               ),
