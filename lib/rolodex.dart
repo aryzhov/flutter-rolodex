@@ -32,7 +32,7 @@ class RolodexThemeData {
     alwaysShowBackground: false,
     maxCards: 20,
     animationDuration: const Duration(milliseconds: 500),
-    animationCurve: Curves.easeOut,
+    animationCurve: Curves.linear,
     clipBorderRadius: BorderRadius.zero,
     cardFallDirection: AxisDirection.down,
     cardStackAlignment: AlignmentDirectional.center,
@@ -307,13 +307,13 @@ class _RolodexCard<T> extends StatelessWidget {
 
   static _getTransformAlignment(AxisDirection ad) {
     switch (ad) {
-      case AxisDirection.down:
-        return AlignmentDirectional.topCenter;
       case AxisDirection.up:
+        return AlignmentDirectional.topCenter;
+      case AxisDirection.down:
         return AlignmentDirectional.bottomCenter;
-      case AxisDirection.left:
-        return AlignmentDirectional.centerEnd;
       case AxisDirection.right:
+        return AlignmentDirectional.centerEnd;
+      case AxisDirection.left:
         return AlignmentDirectional.centerStart;
     }
   }
@@ -400,7 +400,7 @@ class _SplitFlapCard<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = item.theme;
-    final direction = this.part == _SplitFlapCardPart.topHalf ? (prevItem?.direction ?? 0): item.direction;
+    final direction = this.part == _SplitFlapCardPart.topHalf ? item.direction: (nextItem?.direction ?? 0);
 
     Widget addBackground(Widget w) {
       if (item.direction != 0 ||
@@ -470,10 +470,11 @@ class _SplitFlapCard<T> extends StatelessWidget {
     if(direction == 0) {
       switch(part) {
         case _SplitFlapCardPart.topHalf:
-          return clipPart(clipBackground(widget), part);
+          return clipPart(
+          clipBackground(addShadowAnimation(widget, nextItem?.animation, (v) => max(0, v - 0.5))), part);
         case _SplitFlapCardPart.bottomHalf:
           return clipPart(
-            clipBackground(addShadowAnimation(widget, nextItem.animation, (v) => v)), part);
+            clipBackground(addShadowAnimation(widget, item?.animation, (v) => 1.0 - v)), part);
         case _SplitFlapCardPart.full:
           return clipPart(clipBackground(addBackground(item.rolodex.child)), part);
         default:
@@ -481,18 +482,20 @@ class _SplitFlapCard<T> extends StatelessWidget {
       }
     }
 
-    final animation = part == _SplitFlapCardPart.topHalf ? prevItem.animation: item.animation;
+    final animation = part == _SplitFlapCardPart.topHalf ? item.animation: nextItem.animation;
 
     assert(animation != null);
 
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
-        final shadowValue = part == _SplitFlapCardPart.topHalf ? animation.value : min(1.0, (1.0 - animation.value + (nextItem?.animation?.value ?? 0) / 2));
+        final shadowValue = part == _SplitFlapCardPart.topHalf ?
+          max(0.0, 1.0 - animation.value):
+          min(1.0, max(0.0, (animation.value * 0.5 + (1.0 - (item?.animation?.value ?? 1.0)))));
         Widget w = clipPart(clipBackground(addShadow(widget, shadowValue)), part);
         final scale = part == _SplitFlapCardPart.topHalf
-            ? max(0.0, (1.0 - animation.value * 2))
-            : max(0.0, (animation.value * 2 - 1.0));
+            ? max(0.0, (animation.value * 2 - 1.0))
+            : max(0.0, (1.0 - animation.value * 2));
         return Transform(
           origin: Offset.zero,
           alignment: AlignmentDirectional.center,
@@ -620,8 +623,8 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
 
       final d = direction;
       setState(() {
-        if (d >= 0) {
-          if (d0 > 0) {
+        if (d <= 0) {
+          if (d0 < 0) {
             items.add(newItem(widget, 1));
           } else {
             items.forEach((item) => item.dispose());
@@ -635,7 +638,7 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
             items[0].ac.value = 1;
           }
         } else {
-          if (d0 > 0) {
+          if (d0 < 0) {
             items.forEach((item) => item.dispose());
             final lastCard = items.last;
             items.clear();
@@ -651,6 +654,7 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
             items.removeLast()..dispose();
           }
         }
+//        print("${items.map((e) => e.value)} ${items.map((e) => e.direction)}");
       });
     }
     theme = RolodexThemeData.withDefaults(widget.theme, context,
@@ -682,13 +686,13 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
         if (items.length < 2) {
           children.add(_SplitFlapCard(items[0], null, null, _SplitFlapCardPart.full));
         } else {
-          for (var i = items.length-1; i >= 0; i--) {
+          for (var i = 0; i < items.length; i++) {
             final item = items[i];
-            final prevItem = i < items.length -1 ? items[i + 1]: null;
-            final nextItem = i == 0 ? null: items[i - 1];
+            final nextItem = i < items.length -1 ? items[i + 1]: null;
+            final prevItem = i == 0 ? null: items[i - 1];
             children.add(_SplitFlapCard(item, prevItem, nextItem, _SplitFlapCardPart.topHalf));
           }
-          for (var i = 0; i < items.length; i++) {
+          for (var i = items.length-1; i >= 0; i--) {
             final item = items[i];
             final nextItem = i < items.length - 1 ? items[i + 1]: null;
             final prevItem = i == 0 ? null: items[i - 1];
@@ -719,10 +723,12 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
           items.removeAt(0).dispose();
           items.insert(0, newItem(item.rolodex, 0));
         }
+//        print("${items.map((e) => e.value)} ${items.map((e) => e.direction)}");
       });
     } else {
       setState(() {
         items.removeAt(idx).dispose();
+//        print("${items.map((e) => e.value)} ${items.map((e) => e.direction)}");
       });
     }
   }
