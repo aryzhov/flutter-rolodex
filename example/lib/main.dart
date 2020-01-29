@@ -33,6 +33,7 @@ class _MyAppState extends State<MyApp> {
             Rolodex(
               theme: const RolodexThemeData(
                 direction: RolodexDirection.reversed,
+                cardFallDirection: AxisDirection.up,
                 cardColor: Colors.blue,
                 shadowColor: Colors.indigo,
                 clipBorderRadius: BorderRadius.all(Radius.circular(6)),
@@ -49,8 +50,6 @@ class _MyAppState extends State<MyApp> {
                       fontSize: 40,
                       color: Colors.white,
                     ),
-                    softWrap: false,
-                    overflow: TextOverflow.fade,
                   ),
                 ),
               ),
@@ -66,7 +65,7 @@ class _MyAppState extends State<MyApp> {
                         value: c.value,
                         theme: const RolodexThemeData(
                           mode: RolodexMode.splitFlap,
-                          direction: RolodexDirection.forward,
+//                          direction: RolodexDirection.forward,
                         ),
                         child: Text(c.value, style: TextStyle(fontSize: 40))),
                 ],

@@ -1,5 +1,5 @@
 name: rolodex
-description: A Flutter widget that animates value changes as a falling cards.
+description: A Flutter widget that turns a value into an animated deck of cards.
 version: 1.0.0+2
 homepage: https://github.com/aryzhov/flutter-rolodex
 

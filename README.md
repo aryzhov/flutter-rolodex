@@ -1,15 +1,12 @@
 # Rolodex
 
-A Flutter widget that animates a value change by simulating a card with the new value falling 
-on top of the previous value. Useful for indicating a change in the displayed value.
-You can use it for showing scores, stock quotes, bonus points, etc.
+A Flutter widget that animates a changing value by showing a card with the new value falling 
+It can be used for showing team scores, stock quotes, bonus points, etc.
 
 ![animated image](https://raw.githubusercontent.com/aryzhov/flutter-rolodex/master/doc/rolodex.gif)
 
 
 ## Getting Started
-
-It's very easy to add Rolodex to an existing app. All you need to do is:
 
 1. Add a dependency on `rolodex` package in `pubspec.yaml`:
 ```yaml
@@ -22,7 +19,7 @@ dependencies:
 import 'package:rolodex/rolodex.dart';
 ```
 
-3. Wrap a widget that shows a value with [Rolodex]:
+3. Wrap a widget that shows a value with `Rolodex`:
 
 ```dart
 Rolodex(
@@ -59,7 +56,6 @@ Rolodex(
         style: Theme.of(context).textTheme.display1.copyWith(
           fontSize: 40, color: Colors.white,
         ),
-        softWrap: false, overflow: TextOverflow.ellipsis,
       ),
     ),
   ),
@@ -69,7 +65,7 @@ Rolodex(
 ## Global Settings
 
 Instead of customizing every Rolodex widget in your app, you might want to specify global theme settings 
-via [RolodexTheme]:
+via `RolodexTheme`:
 
 ```dart
 return MaterialApp(

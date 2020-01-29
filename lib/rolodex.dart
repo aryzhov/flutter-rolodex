@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 /// Card fall direction.
 enum RolodexDirection {
@@ -29,7 +30,7 @@ class RolodexThemeData {
     cardColor: const Color.fromARGB(255, 255, 255, 255),
     shadowColor: const Color.fromARGB(128, 128, 128, 128),
     alwaysShowBackground: false,
-    maxCards: 3,
+    maxCards: 20,
     animationDuration: const Duration(milliseconds: 500),
     animationCurve: Curves.easeOut,
     clipBorderRadius: BorderRadius.zero,
@@ -235,59 +236,69 @@ class _RolodexCard<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = item.theme;
 
-    Widget w = item.rolodex.child;
-
-    if (item.direction != 0 || topItem != null || theme.alwaysShowBackground) {
-      w = DecoratedBox(
-        child: w,
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-        ),
-        position: DecorationPosition.background,
-      );
-    }
-
-    if (topItem != null) {
-      // add a "shadow" from the top item
-      final w1 = w;
-      w = AnimatedBuilder(
-          animation: topItem.animation,
-          builder: (context, _) {
-            return DecoratedBox(
-              child: w1,
-              decoration: BoxDecoration(
-                color: theme.shadowColor.withOpacity(topItem.animation.value),
-//                    color: Colors.black26.withOpacity((1.0 - item.animation.value + topItem.animation.value) * 0.6),
-              ),
-              position: DecorationPosition.foreground,
-            );
-          });
-    }
-
-    if (theme.clipBorderRadius != BorderRadius.zero) {
-      if (item.direction != 0 ||
-          topItem != null ||
-          theme.alwaysShowBackground) {
-        w = ClipRRect(
-          borderRadius: theme.clipBorderRadius,
+    Widget addBackground(Widget w) {
+      if (item.direction != 0 || topItem != null || theme.alwaysShowBackground) {
+        return DecoratedBox(
           child: w,
-          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+          ),
+          position: DecorationPosition.background,
         );
+      } else {
+        return w;
       }
     }
 
-    if (item.direction == 0) {
+    Widget clipBackground(Widget w) {
+      if (theme.clipBorderRadius != BorderRadius.zero) {
+        if (item.direction != 0 || topItem != null || theme.alwaysShowBackground) {
+          return ClipRRect(
+            borderRadius: theme.clipBorderRadius,
+            child: w,
+            clipBehavior: Clip.antiAlias,
+          );
+        }
+      }
       return w;
+    }
+
+    Widget addShadow(Widget w, double value) {
+      return DecoratedBox(
+        child: w,
+        decoration: BoxDecoration(
+          color: theme.shadowColor.withOpacity(value),
+        ),
+        position: DecorationPosition.foreground,
+      );
+    }
+
+    Widget addShadowAnimation(
+        Widget w, Animation<double> animation, double Function(double d) func) {
+      if(animation == null)
+        return w;
+      return AnimatedBuilder(
+          animation: animation,
+          builder: (context, _) {
+            return addShadow(w, func(animation.value));
+          });
+    }
+
+    Widget w = addBackground(item.rolodex.child);
+
+    if (item.direction == 0) {
+      return clipBackground(addShadowAnimation(w, topItem?.animation, (d) => d / 2));
     } else {
       return AnimatedBuilder(
         animation: item.animation,
         builder: (context, child) {
+          final widget = clipBackground(addShadow(w, max(0.0, min(1.0, 1 - item.animation.value - (topItem?.animation?.value ?? 0)/ 2))));
           return Transform(
             origin: Offset.zero,
             alignment: _getTransformAlignment(theme.cardFallDirection),
             transform: _getTransformMatrix(
                 theme.cardFallDirection, item.animation.value),
-            child: w,
+            child: widget,
           );
         },
       );
@@ -381,13 +392,15 @@ class _SplitFlapCardClipper extends CustomClipper<Rect> {
 class _SplitFlapCard<T> extends StatelessWidget {
   final _RolodexItem item;
   final _RolodexItem prevItem;
+  final _RolodexItem nextItem;
   final _SplitFlapCardPart part;
 
-  _SplitFlapCard(this.item, this.prevItem, this.part);
+  _SplitFlapCard(this.item, this.prevItem, this.nextItem, this.part);
 
   @override
   Widget build(BuildContext context) {
     final theme = item.theme;
+    final direction = this.part == _SplitFlapCardPart.topHalf ? (prevItem?.direction ?? 0): item.direction;
 
     Widget addBackground(Widget w) {
       if (item.direction != 0 ||
@@ -407,7 +420,7 @@ class _SplitFlapCard<T> extends StatelessWidget {
 
     Widget clipBackground(Widget w) {
       if (theme.clipBorderRadius != BorderRadius.zero) {
-        if (item.direction != 0 ||
+        if (direction != 0 ||
             part != _SplitFlapCardPart.full ||
             theme.alwaysShowBackground) {
           return ClipRRect(
@@ -443,6 +456,8 @@ class _SplitFlapCard<T> extends StatelessWidget {
 
     Widget addShadowAnimation(
         Widget w, Animation<double> animation, double Function(double d) func) {
+      if(animation == null)
+        return w;
       return AnimatedBuilder(
           animation: animation,
           builder: (context, _) {
@@ -450,68 +465,38 @@ class _SplitFlapCard<T> extends StatelessWidget {
           });
     }
 
-    if (part == _SplitFlapCardPart.topHalf) {
-//      return clipPart(clipBackground(addBackground(item.rolodex.child)), part);
-//      return clipPart(addShadow(clipBackground(addBackground(item.rolodex.child)), prevItem.animation, (v) => (v > 0.5 ? 0: (1.0 - v * 2))), part);
-      return clipPart(
-          clipBackground(addShadowAnimation(addBackground(item.rolodex.child),
-              prevItem.animation, (v) => 0.5 - v * 0.5)),
-          part);
+    Widget widget = addBackground(item.rolodex.child);
+
+    if(direction == 0) {
+      switch(part) {
+        case _SplitFlapCardPart.topHalf:
+          return clipPart(clipBackground(widget), part);
+        case _SplitFlapCardPart.bottomHalf:
+          return clipPart(
+            clipBackground(addShadowAnimation(widget, nextItem.animation, (v) => v)), part);
+        case _SplitFlapCardPart.full:
+          return clipPart(clipBackground(addBackground(item.rolodex.child)), part);
+        default:
+          assert(false); return null;
+      }
     }
 
-    if (part == _SplitFlapCardPart.bottomHalf) {
-      return clipPart(
-          clipBackground(addShadowAnimation(
-              addBackground(item.rolodex.child), prevItem.animation, (v) => v)),
-          part);
-    }
+    final animation = part == _SplitFlapCardPart.topHalf ? prevItem.animation: item.animation;
 
-    if (item.direction == 0) {
-      return clipPart(clipBackground(addBackground(item.rolodex.child)), part);
-    }
-
-    Widget topHalfWidget = (addBackground(prevItem.rolodex.child));
-    Widget bottomHalfWidget = (addBackground(item.rolodex.child));
-
-//    Widget bottomHalfWidget = nexItem
-
-//    if(topItem != null) {
-//      // add a "shadow" from the top item
-//      final w1 = w;
-//      w = AnimatedBuilder(
-//          animation: topItem.animation,
-//          builder: (context, _) {
-//            return DecoratedBox(
-//              child: w1,
-//              decoration: BoxDecoration(
-//                color: theme.shadowColor.withOpacity(topItem.animation.value),
-//              ),
-//              position: DecorationPosition.foreground,
-//            );
-//          }
-//      );
-//    }
+    assert(animation != null);
 
     return AnimatedBuilder(
-      animation: item.animation,
+      animation: animation,
       builder: (context, child) {
-        final type = item.animation.value > 0.5
-            ? _SplitFlapCardPart.bottomHalf
-            : _SplitFlapCardPart.topHalf;
-        Widget w = type == _SplitFlapCardPart.bottomHalf
-            ? bottomHalfWidget
-            : topHalfWidget;
-        w = clipBackground(addShadow(w,
-            type == _SplitFlapCardPart.topHalf ? item.animation.value * 2 : 0));
-        w = clipPart(w, type);
+        final shadowValue = part == _SplitFlapCardPart.topHalf ? animation.value : min(1.0, (1.0 - animation.value + (nextItem?.animation?.value ?? 0) / 2));
+        Widget w = clipPart(clipBackground(addShadow(widget, shadowValue)), part);
+        final scale = part == _SplitFlapCardPart.topHalf
+            ? max(0.0, (1.0 - animation.value * 2))
+            : max(0.0, (animation.value * 2 - 1.0));
         return Transform(
           origin: Offset.zero,
           alignment: AlignmentDirectional.center,
-          transform: _getTransformMatrix(
-              theme.cardFallDirection,
-              type == _SplitFlapCardPart.topHalf
-                  ? (1.0 - item.animation.value * 2)
-                  : (item.animation.value * 2 - 1.0)),
+          transform: _getTransformMatrix(theme.cardFallDirection, scale),
           child: w,
         );
       },
@@ -694,19 +679,21 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
               items[i], i < items.length - 1 ? items[i + 1] : null));
         break;
       case RolodexMode.splitFlap:
-        if (items.length > 1 && items.last.direction != 0) {
-          children.add(_SplitFlapCard(
-              items.last, items.last, _SplitFlapCardPart.topHalf));
-          children.add(_SplitFlapCard(
-              items[0], items[1], _SplitFlapCardPart.bottomHalf));
-          for (var i = 1; i < items.length; i++) {
-            final item = items[i];
-            final prevItem = items[i - 1];
-            children
-                .add(_SplitFlapCard(item, prevItem, _SplitFlapCardPart.full));
-          }
+        if (items.length < 2) {
+          children.add(_SplitFlapCard(items[0], null, null, _SplitFlapCardPart.full));
         } else {
-          children.add(_SplitFlapCard(items[0], null, _SplitFlapCardPart.full));
+          for (var i = items.length-1; i >= 0; i--) {
+            final item = items[i];
+            final prevItem = i < items.length -1 ? items[i + 1]: null;
+            final nextItem = i == 0 ? null: items[i - 1];
+            children.add(_SplitFlapCard(item, prevItem, nextItem, _SplitFlapCardPart.topHalf));
+          }
+          for (var i = 0; i < items.length; i++) {
+            final item = items[i];
+            final nextItem = i < items.length - 1 ? items[i + 1]: null;
+            final prevItem = i == 0 ? null: items[i - 1];
+            children.add(_SplitFlapCard(item, prevItem, nextItem, _SplitFlapCardPart.bottomHalf));
+          }
         }
 
         break;
