@@ -23,9 +23,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     final counterDigits = "$counter".padLeft(2, ' ').split('');
     return RolodexTheme(
-      data: RolodexThemeData(
-
-      ),
+      data: RolodexThemeData(),
       child: MaterialApp(
         home: Scaffold(
           appBar: AppBar(
@@ -73,7 +71,9 @@ class _MyAppState extends State<MyApp> {
                           child: SizedBox(
                               width: 30,
 //                            height: 42,
-                              child: Center(child: Text(c.value, style: TextStyle(fontSize: 40))))),
+                              child: Center(
+                                  child: Text(c.value,
+                                      style: TextStyle(fontSize: 40))))),
                   ],
                 ),
               ),

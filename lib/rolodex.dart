@@ -237,7 +237,9 @@ class _RolodexCard<T> extends StatelessWidget {
     final theme = item.theme;
 
     Widget addBackground(Widget w) {
-      if (item.direction != 0 || topItem != null || theme.alwaysShowBackground) {
+      if (item.direction != 0 ||
+          topItem != null ||
+          theme.alwaysShowBackground) {
         return DecoratedBox(
           child: w,
           decoration: BoxDecoration(
@@ -252,7 +254,9 @@ class _RolodexCard<T> extends StatelessWidget {
 
     Widget clipBackground(Widget w) {
       if (theme.clipBorderRadius != BorderRadius.zero) {
-        if (item.direction != 0 || topItem != null || theme.alwaysShowBackground) {
+        if (item.direction != 0 ||
+            topItem != null ||
+            theme.alwaysShowBackground) {
           return ClipRRect(
             borderRadius: theme.clipBorderRadius,
             child: w,
@@ -275,8 +279,7 @@ class _RolodexCard<T> extends StatelessWidget {
 
     Widget addShadowAnimation(
         Widget w, Animation<double> animation, double Function(double d) func) {
-      if(animation == null)
-        return w;
+      if (animation == null) return w;
       return AnimatedBuilder(
           animation: animation,
           builder: (context, _) {
@@ -287,12 +290,21 @@ class _RolodexCard<T> extends StatelessWidget {
     Widget w = addBackground(item.rolodex.child);
 
     if (item.direction == 0) {
-      return clipBackground(addShadowAnimation(w, topItem?.animation, (d) => d / 2));
+      return clipBackground(
+          addShadowAnimation(w, topItem?.animation, (d) => d / 2));
     } else {
       return AnimatedBuilder(
         animation: item.animation,
         builder: (context, child) {
-          final widget = clipBackground(addShadow(w, max(0.0, min(1.0, 1 - item.animation.value - (topItem?.animation?.value ?? 0)/ 2))));
+          final widget = clipBackground(addShadow(
+              w,
+              max(
+                  0.0,
+                  min(
+                      1.0,
+                      1 -
+                          item.animation.value -
+                          (topItem?.animation?.value ?? 0) / 2))));
           return Transform(
             origin: Offset.zero,
             alignment: _getTransformAlignment(theme.cardFallDirection),
@@ -400,7 +412,9 @@ class _SplitFlapCard<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = item.theme;
-    final direction = this.part == _SplitFlapCardPart.topHalf ? item.direction: (nextItem?.direction ?? 0);
+    final direction = this.part == _SplitFlapCardPart.topHalf
+        ? item.direction
+        : (nextItem?.direction ?? 0);
 
     Widget addBackground(Widget w) {
       if (item.direction != 0 ||
@@ -456,8 +470,7 @@ class _SplitFlapCard<T> extends StatelessWidget {
 
     Widget addShadowAnimation(
         Widget w, Animation<double> animation, double Function(double d) func) {
-      if(animation == null)
-        return w;
+      if (animation == null) return w;
       return AnimatedBuilder(
           animation: animation,
           builder: (context, _) {
@@ -467,32 +480,46 @@ class _SplitFlapCard<T> extends StatelessWidget {
 
     Widget widget = addBackground(item.rolodex.child);
 
-    if(direction == 0) {
-      switch(part) {
+    if (direction == 0) {
+      switch (part) {
         case _SplitFlapCardPart.topHalf:
           return clipPart(
-          clipBackground(addShadowAnimation(widget, nextItem?.animation, (v) => max(0, v - 0.5))), part);
+              clipBackground(addShadowAnimation(
+                  widget, nextItem?.animation, (v) => max(0, v - 0.5))),
+              part);
         case _SplitFlapCardPart.bottomHalf:
           return clipPart(
-            clipBackground(addShadowAnimation(widget, item?.animation, (v) => 1.0 - v)), part);
+              clipBackground(
+                  addShadowAnimation(widget, item?.animation, (v) => 1.0 - v)),
+              part);
         case _SplitFlapCardPart.full:
-          return clipPart(clipBackground(addBackground(item.rolodex.child)), part);
+          return clipPart(
+              clipBackground(addBackground(item.rolodex.child)), part);
         default:
-          assert(false); return null;
+          assert(false);
+          return null;
       }
     }
 
-    final animation = part == _SplitFlapCardPart.topHalf ? item.animation: nextItem.animation;
+    final animation = part == _SplitFlapCardPart.topHalf
+        ? item.animation
+        : nextItem.animation;
 
     assert(animation != null);
 
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
-        final shadowValue = part == _SplitFlapCardPart.topHalf ?
-          max(0.0, 1.0 - animation.value):
-          min(1.0, max(0.0, (animation.value * 0.5 + (1.0 - (item?.animation?.value ?? 1.0)))));
-        Widget w = clipPart(clipBackground(addShadow(widget, shadowValue)), part);
+        final shadowValue = part == _SplitFlapCardPart.topHalf
+            ? max(0.0, 1.0 - animation.value)
+            : min(
+                1.0,
+                max(
+                    0.0,
+                    (animation.value * 0.5 +
+                        (1.0 - (item?.animation?.value ?? 1.0)))));
+        Widget w =
+            clipPart(clipBackground(addShadow(widget, shadowValue)), part);
         final scale = part == _SplitFlapCardPart.topHalf
             ? max(0.0, (animation.value * 2 - 1.0))
             : max(0.0, (1.0 - animation.value * 2));
@@ -563,10 +590,13 @@ class _RolodexItem<T> {
 class Rolodex<T> extends StatefulWidget {
   /// Specifies the latest value
   final Widget child;
+
   /// The latest value
   final T value;
+
   /// The comparator (optional). Allows to determine the order of falling cards.
   final Comparator comparator;
+
   /// Theme settings. These will override global settings defined in [RolodexTheme].
   final RolodexThemeData theme;
 
@@ -684,19 +714,22 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
         break;
       case RolodexMode.splitFlap:
         if (items.length < 2) {
-          children.add(_SplitFlapCard(items[0], null, null, _SplitFlapCardPart.full));
+          children.add(
+              _SplitFlapCard(items[0], null, null, _SplitFlapCardPart.full));
         } else {
           for (var i = 0; i < items.length; i++) {
             final item = items[i];
-            final nextItem = i < items.length -1 ? items[i + 1]: null;
-            final prevItem = i == 0 ? null: items[i - 1];
-            children.add(_SplitFlapCard(item, prevItem, nextItem, _SplitFlapCardPart.topHalf));
+            final nextItem = i < items.length - 1 ? items[i + 1] : null;
+            final prevItem = i == 0 ? null : items[i - 1];
+            children.add(_SplitFlapCard(
+                item, prevItem, nextItem, _SplitFlapCardPart.topHalf));
           }
-          for (var i = items.length-1; i >= 0; i--) {
+          for (var i = items.length - 1; i >= 0; i--) {
             final item = items[i];
-            final nextItem = i < items.length - 1 ? items[i + 1]: null;
-            final prevItem = i == 0 ? null: items[i - 1];
-            children.add(_SplitFlapCard(item, prevItem, nextItem, _SplitFlapCardPart.bottomHalf));
+            final nextItem = i < items.length - 1 ? items[i + 1] : null;
+            final prevItem = i == 0 ? null : items[i - 1];
+            children.add(_SplitFlapCard(
+                item, prevItem, nextItem, _SplitFlapCardPart.bottomHalf));
           }
         }
 
