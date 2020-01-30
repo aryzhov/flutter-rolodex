@@ -1,9 +1,9 @@
 # Rolodex
 
-A Flutter widget that animates a changing value by showing a card with the new value falling 
+A Flutter widget that turns a value into an animated deck of cards.
 It can be used for showing team scores, stock quotes, bonus points, etc.
 
-![animated image](https://raw.githubusercontent.com/aryzhov/flutter-rolodex/master/doc/rolodex.gif)
+![animated image](https://raw.githubusercontent.com/aryzhov/flutter-rolodex/master/doc/rolodex2.gif)
 
 
 ## Getting Started
@@ -74,10 +74,10 @@ return MaterialApp(
     primarySwatch: Colors.blue,
   ),
   home: RolodexTheme(
-    data: RolodexThemeData(           // <-- These settings will apply to all Rolodex widgets in the widget tree
+    data: const RolodexThemeData(  // <-- These settings will apply to all Rolodex widgets in the widget tree
       mode: RolodexMode.splitFlap,
       maxCards: 2,
-      animationDuration: Duration(milliseconds: 200),
+      animationDuration: const Duration(milliseconds: 200),
     ),
     child: MyHomePage(title: 'Flutter Demo Home Page')
   ),
