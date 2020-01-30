@@ -30,7 +30,7 @@ class RolodexThemeData {
     cardColor: const Color.fromARGB(255, 255, 255, 255),
     shadowColor: const Color.fromARGB(128, 128, 128, 128),
     alwaysShowBackground: false,
-    maxCards: 20,
+    maxCards: 3,
     animationDuration: const Duration(milliseconds: 500),
     animationCurve: Curves.linear,
     clipBorderRadius: BorderRadius.zero,

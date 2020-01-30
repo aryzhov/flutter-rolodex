@@ -1,6 +1,7 @@
-## 1.0.0+2
+## 1.0.1
 
-* Minor documentation changes.
+* Changed default card fall direction to "down".
+* Improved shadow calculations.
 
 ## 1.0.0
 
