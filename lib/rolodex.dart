@@ -343,7 +343,7 @@ class _RolodexCard<T> extends StatelessWidget {
 
   static _getTransformMatrix(RolodexThemeData theme, double value) {
     final m = Matrix4.identity()..setEntry(3, 2, theme.perspective * 0.005);
-    final angle = (1.0-value) * 0.5 * math.pi;
+    final angle = (1.0 - value) * 0.5 * math.pi;
     switch (theme.cardFallDirection) {
       case AxisDirection.down:
         return m..rotateX(angle);
