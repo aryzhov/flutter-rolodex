@@ -3,7 +3,7 @@
 A Flutter widget that turns a value into an animated deck of cards.
 It can be used for showing team scores, stock quotes, bonus points, etc.
 
-![animated image](https://raw.githubusercontent.com/aryzhov/flutter-rolodex/master/doc/rolodex2.gif)
+![animated image](https://raw.githubusercontent.com/aryzhov/flutter-rolodex/master/doc/rolodex3.gif)
 
 
 ## Getting Started

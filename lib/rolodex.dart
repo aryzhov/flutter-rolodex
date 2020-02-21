@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'dart:math' as math;
 
 /// Card fall direction.
 enum RolodexDirection {
@@ -19,7 +19,7 @@ enum RolodexDirection {
 /// Mode of operation.
 enum RolodexMode {
   // Falling cards simulation
-  falling,
+  fallingCards,
   // Split-flap simulation
   splitFlap,
 }
@@ -37,7 +37,8 @@ class RolodexThemeData {
     cardFallDirection: AxisDirection.down,
     cardStackAlignment: AlignmentDirectional.center,
     direction: RolodexDirection.normal,
-    mode: RolodexMode.falling,
+    mode: RolodexMode.fallingCards,
+    perspective: 0.5,
   );
 
   static final RolodexThemeData empty = const RolodexThemeData();
@@ -69,9 +70,16 @@ class RolodexThemeData {
   // Defines the alignment point in case if cards have different sizes.
   final AlignmentGeometry cardStackAlignment;
 
+  // Normally, the cards will fall backward if the new value is lower than the last one.
+  // This property allows to set them to always fall forward, always backward, or reverse the normal order.
   final RolodexDirection direction;
 
+  // Defines the kind of rolodex to simulate.
   final RolodexMode mode;
+
+  // Specifies the strength of the 3D effect. 0.0 is no perspective. 1.0 is strong perspective. Values greater than
+  // 1.0 are not desired. Values less than 0.0 are invalid.
+  final double perspective;
 
   const RolodexThemeData({
     this.cardColor,
@@ -85,6 +93,7 @@ class RolodexThemeData {
     this.cardFallDirection,
     this.direction,
     this.mode,
+    this.perspective,
   });
 
   static RolodexThemeData combine(
@@ -112,6 +121,7 @@ class RolodexThemeData {
             theme.cardFallDirection ?? defaults.cardFallDirection,
         direction: theme.direction ?? defaults.direction,
         mode: theme.mode ?? defaults.mode,
+        perspective: theme.perspective ?? defaults.perspective,
       );
     }
   }
@@ -135,7 +145,8 @@ class RolodexThemeData {
         this.cardStackAlignment != null &&
         this.cardFallDirection != null &&
         this.direction != null &&
-        this.mode != null;
+        this.mode != null &&
+        this.perspective != null;
   }
 
   bool operator ==(dynamic o) {
@@ -152,7 +163,8 @@ class RolodexThemeData {
           this.cardStackAlignment == o.cardStackAlignment &&
           this.cardFallDirection == o.cardFallDirection &&
           this.direction == o.direction &&
-          this.mode == o.mode;
+          this.mode == o.mode &&
+          this.perspective == o.perspective;
     } else {
       return false;
     }
@@ -298,9 +310,9 @@ class _RolodexCard<T> extends StatelessWidget {
         builder: (context, child) {
           final widget = clipBackground(addShadow(
               w,
-              max(
+              math.max(
                   0.0,
-                  min(
+                  math.min(
                       1.0,
                       1 -
                           item.animation.value -
@@ -308,8 +320,7 @@ class _RolodexCard<T> extends StatelessWidget {
           return Transform(
             origin: Offset.zero,
             alignment: _getTransformAlignment(theme.cardFallDirection),
-            transform: _getTransformMatrix(
-                theme.cardFallDirection, item.animation.value),
+            transform: _getTransformMatrix(theme, item.animation.value),
             child: widget,
           );
         },
@@ -330,14 +341,18 @@ class _RolodexCard<T> extends StatelessWidget {
     }
   }
 
-  static _getTransformMatrix(AxisDirection ad, double scale) {
-    switch (ad) {
+  static _getTransformMatrix(RolodexThemeData theme, double value) {
+    final m = Matrix4.identity()..setEntry(3, 2, theme.perspective * 0.005);
+    final angle = (1.0-value) * 0.5 * math.pi;
+    switch (theme.cardFallDirection) {
       case AxisDirection.down:
+        return m..rotateX(angle);
       case AxisDirection.up:
-        return Matrix4.diagonal3Values(1.0, scale, 1.0);
+        return m..rotateX(-angle);
       case AxisDirection.left:
+        return m..rotateY(angle);
       case AxisDirection.right:
-        return Matrix4.diagonal3Values(scale, 1.0, 1.0);
+        return m..rotateY(-angle);
     }
   }
 }
@@ -485,7 +500,7 @@ class _SplitFlapCard<T> extends StatelessWidget {
         case _SplitFlapCardPart.topHalf:
           return clipPart(
               clipBackground(addShadowAnimation(
-                  widget, nextItem?.animation, (v) => max(0, v - 0.5))),
+                  widget, nextItem?.animation, (v) => math.max(0, v - 0.5))),
               part);
         case _SplitFlapCardPart.bottomHalf:
           return clipPart(
@@ -511,36 +526,40 @@ class _SplitFlapCard<T> extends StatelessWidget {
       animation: animation,
       builder: (context, child) {
         final shadowValue = part == _SplitFlapCardPart.topHalf
-            ? max(0.0, 1.0 - animation.value)
-            : min(
+            ? math.max(0.0, 1.0 - animation.value)
+            : math.min(
                 1.0,
-                max(
+                math.max(
                     0.0,
                     (animation.value * 0.5 +
                         (1.0 - (item?.animation?.value ?? 1.0)))));
         Widget w =
             clipPart(clipBackground(addShadow(widget, shadowValue)), part);
         final scale = part == _SplitFlapCardPart.topHalf
-            ? max(0.0, (animation.value * 2 - 1.0))
-            : max(0.0, (1.0 - animation.value * 2));
+            ? math.min(0.5, 1.0 - animation.value)
+            : math.max(-0.5, -animation.value);
         return Transform(
           origin: Offset.zero,
           alignment: AlignmentDirectional.center,
-          transform: _getTransformMatrix(theme.cardFallDirection, scale),
+          transform: _getTransformMatrix(theme, scale),
           child: w,
         );
       },
     );
   }
 
-  static _getTransformMatrix(AxisDirection ad, double scale) {
-    switch (ad) {
+  static _getTransformMatrix(RolodexThemeData theme, double value) {
+    final m = Matrix4.identity()..setEntry(3, 2, theme.perspective * 0.01);
+    final angle = value * math.pi;
+    switch (theme.cardFallDirection) {
       case AxisDirection.down:
+        return m..rotateX(angle);
       case AxisDirection.up:
-        return Matrix4.diagonal3Values(1.0, scale, 1.0);
+        return m..rotateX(-angle);
       case AxisDirection.left:
+        return m..rotateY(angle);
       case AxisDirection.right:
-        return Matrix4.diagonal3Values(scale, 1.0, 1.0);
+        return m..rotateX(-angle);
     }
   }
 }
@@ -707,7 +726,7 @@ class _RolodexState<T> extends State<Rolodex<T>> with TickerProviderStateMixin {
 
     final children = List<Widget>();
     switch (theme.mode) {
-      case RolodexMode.falling:
+      case RolodexMode.fallingCards:
         for (var i = 0; i < items.length; i++)
           children.add(_RolodexCard(
               items[i], i < items.length - 1 ? items[i + 1] : null));
